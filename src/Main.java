@@ -4,11 +4,11 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         CourseGraph graph = new CourseGraph();
-        
+
         // 1. Inisialisasi Trie untuk fitur pencarian
-        Trie trie = new Trie(); 
-        
-        // 2. DIUBAH: Menggunakan DataLoader buatanmu alih-alih graph.loadData() milik Viko
+        Trie trie = new Trie();
+
+        // 2. Menggunakan DataLoader untuk load data dari CSV
         Fitur_DataLoader.load("data/node.csv", "data/edge.csv", trie, graph);
 
         int pilih = -1;
@@ -16,17 +16,19 @@ public class Main {
             System.out.println("\n========================================");
             System.out.println("   LIBRARY KNOWLEDGE NAVIGATOR");
             System.out.println("========================================");
-            System.out.println("1. Insert data (MK baru / relasi baru)");
-            System.out.println("2. Search MK berdasarkan prefix");
-            System.out.println("3. Update / Delete data");
-            System.out.println("4. Tampilkan semua MK & Graph");
-            System.out.println("5. DFS - Traversal rantai prasyarat");
-            System.out.println("6. Topological Sort - Urutan belajar");
-            System.out.println("7. Cycle Detection");
-            System.out.println("8. Tampilkan Prasyarat Sebuah Topik");
-            System.out.println("9. Tracing Proses Trie (Step-by-Step)");
+            System.out.println("1.  Insert data (MK baru / relasi baru)");
+            System.out.println("2.  Search MK berdasarkan prefix");
+            System.out.println("3.  Update / Delete data");
+            System.out.println("4.  Tampilkan semua MK & Graph");
+            System.out.println("5.  DFS - Traversal rantai prasyarat");
+            System.out.println("6.  Topological Sort - Urutan belajar");
+            System.out.println("7.  Cycle Detection");
+            System.out.println("8.  Tampilkan Prasyarat Sebuah Topik");
+            System.out.println("9.  Tracing Proses Trie (Step-by-Step)");
             System.out.println("10. Deteksi Siklus Prasyarat");
-            System.out.println("0. Keluar");
+            System.out.println("11. Tracing Proses Graph (Step-by-Step)");
+            System.out.println("12. Tracing Edge Case Graph");
+            System.out.println("0.  Keluar");
             System.out.print("Pilih menu: ");
 
             pilih = Integer.parseInt(sc.nextLine().trim());
@@ -67,6 +69,14 @@ public class Main {
                     break;
                 case 10:
                     Fitur_CycleDetection.menu(graph, sc);
+                    break;
+                case 11:
+                    // DITAMBAH: Fitur Tracing Proses Graph (DFS + Topological Sort step-by-step)
+                    Fitur_GraphTracing.menu(graph, sc);
+                    break;
+                case 12:
+                    // DITAMBAH: Fitur Tracing Edge Case Graph (5 kondisi ekstrem)
+                    Fitur_EdgeCaseTracing.menu(graph, sc);
                     break;
                 case 0:
                     System.out.println("Keluar. Sampai jumpa!");
