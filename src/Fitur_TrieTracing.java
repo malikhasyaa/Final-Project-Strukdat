@@ -1,4 +1,4 @@
-public class Fitur12_TrieTracing {
+public class Fitur_TrieTracing {
 
     private TrieNode root;
     private int totalInserted;
