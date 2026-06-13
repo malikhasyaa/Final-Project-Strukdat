@@ -74,7 +74,7 @@ Final-Project-Strukdat/
 
 ## Dataset
 
-Dataset dibuat secara mandiri oleh kelompok dan merepresentasikan kurikulum fiktif program studi Rekayasa Teknologi Informasi. Dataset terdiri dari dua file CSV.
+Dataset dibuat secara mandiri oleh kelompok dan merepresentasikan kurikulum program studi Rekayasa Teknologi Informasi. Dataset terdiri dari dua file CSV.
 
 ### node.csv — Data Mata Kuliah (25 Node)
 
