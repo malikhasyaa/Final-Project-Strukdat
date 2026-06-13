@@ -1,4 +1,4 @@
-public class Fitur10_CycleDetection {
+public class Fitur_CycleDetection {
 
     static final int UNVISITED = 0;
     static final int VISITING  = 1;
