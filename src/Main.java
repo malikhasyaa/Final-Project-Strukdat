@@ -60,13 +60,13 @@ public class Main {
                     System.out.println("(Fitur 7 belum diimplementasi)");
                     break;
                 case 8:
-                    Fitur8_Prerequisites.menu(graph, sc);
+                    Fitur_Prerequisites.menu(graph, sc);
                     break;
                 case 9:
-                    Fitur12_TrieTracing.menu(graph, sc);
+                    Fitur_TrieTracing.menu(graph, sc);
                     break;
                 case 10:
-                    Fitur10_CycleDetection.menu(graph, sc);
+                    Fitur_CycleDetection.menu(graph, sc);
                     break;
                 case 0:
                     System.out.println("Keluar. Sampai jumpa!");
