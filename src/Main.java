@@ -18,6 +18,9 @@ public class Main {
             System.out.println("5. DFS - Traversal rantai prasyarat");
             System.out.println("6. Topological Sort - Urutan belajar");
             System.out.println("7. Cycle Detection");
+            System.out.println("8. Tampilkan Prasyarat Sebuah Topik");
+            System.out.println("9. Tracing Proses Trie (Step-by-Step)");
+            System.out.println("10. Deteksi Siklus Prasyarat");
             System.out.println("0. Keluar");
             System.out.print("Pilih menu: ");
 
@@ -46,6 +49,15 @@ public class Main {
                     break;
                 case 7:
                     System.out.println("(Fitur 7 belum diimplementasi)");
+                    break;
+                case 8:
+                    Fitur8_Prerequisites.menu(graph, sc);
+                    break;
+                case 9:
+                    Fitur12_TrieTracing.menu(graph, sc);
+                    break;
+                case 10:
+                    Fitur10_CycleDetection.menu(graph, sc);
                     break;
                 case 0:
                     System.out.println("Keluar. Sampai jumpa!");
