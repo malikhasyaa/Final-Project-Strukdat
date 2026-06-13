@@ -4,7 +4,12 @@ public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         CourseGraph graph = new CourseGraph();
-        graph.loadData();
+        
+        // 1. Inisialisasi Trie untuk fitur pencarian
+        Trie trie = new Trie(); 
+        
+        // 2. DIUBAH: Menggunakan DataLoader buatanmu alih-alih graph.loadData() milik Viko
+        Fitur_DataLoader.load("data/node.csv", "data/edge.csv", trie, graph);
 
         int pilih = -1;
         while (pilih != 0) {
@@ -31,7 +36,10 @@ public class Main {
                     graph.insertMenu(sc);
                     break;
                 case 2:
-                    System.out.println("(Fitur 2 belum diimplementasi)");
+                    // DIUBAH: Fitur Smart Path Navigator (Trie -> Graph)
+                    System.out.print("Masukkan awalan topik (contoh: 'Sistem'): ");
+                    String keyword = sc.nextLine();
+                    Fitur_SmartPath.jalankan(keyword, trie, graph);
                     break;
                 case 3:
                     graph.deleteMenu(sc);
@@ -40,9 +48,10 @@ public class Main {
                     graph.displayGraph();
                     break;
                 case 5:
+                    // DIUBAH: Fitur DFS pencarian prasyarat mundur
                     System.out.print("Masukkan Kode MK: ");
                     String kode = sc.nextLine();
-                    graph.dfs(kode);
+                    Fitur_DFSPrasyarat.cetak(kode, graph);
                     break;
                 case 6:
                     System.out.println("(Fitur 6 belum diimplementasi)");
