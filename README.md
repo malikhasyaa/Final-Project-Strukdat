@@ -1,4 +1,4 @@
-**Final Project Struktur Data 2026**
+## **FINAL PROJECT STRUKTUR DATA DAN PEMROGRAMAN BERORIENTASI OBJEK (A) 2026**
 
 Sistem manajemen kurikulum berbasis **Trie** dan **Directed Graph** yang dirancang untuk membantu mahasiswa menelusuri jalur prasyarat mata kuliah, mencari topik secara cerdas, serta mendapatkan rekomendasi urutan belajar yang terstruktur dan logis.
 
