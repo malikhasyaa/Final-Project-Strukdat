@@ -181,7 +181,7 @@ Fitur ini menyatukan keunggulan kedua struktur data:
 
 ---
 
-## ⏱️ Analisis Kompleksitas Waktu
+## Analisis Kompleksitas Waktu
 
 | Operasi | Struktur / Algoritma | Kompleksitas | Alasan |
 |---------|----------------------|--------------|--------|
@@ -231,7 +231,7 @@ Fitur ini menyatukan keunggulan kedua struktur data:
 
 ---
 
-## 💻 Penjelasan Source Code
+## Penjelasan Source Code
 
 ### 1. `TrieNode.java` — Node Dasar Struktur Trie
 
