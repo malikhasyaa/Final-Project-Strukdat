@@ -1,4 +1,4 @@
-public class Fitur8_Prerequisites {
+public class Fitur_Prerequisites {
 
     public static void tampilkanPrasyarat(CourseGraph graph, String kodeTujuan) {
         int targetIdx = graph.findIndex(kodeTujuan);
