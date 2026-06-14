@@ -1,14 +1,12 @@
-public class Fitur_RekomendasiBelajar {
+import java.util.LinkedList;
+import java.util.Queue;
 
-    public static void menu(CourseGraph graph, java.util.Scanner sc) {
-        System.out.println("\n╔══════════════════════════════════════════════════════╗");
-        System.out.println("║   FITUR 9 — REKOMENDASI URUTAN BELAJAR              ║");
-        System.out.println("╚══════════════════════════════════════════════════════╝");
-        System.out.println("  Urutan dari MK tanpa prasyarat hingga MK tingkat lanjut.");
-        System.out.println("──────────────────────────────────────────────────────");
-
-        // Hitung in-degree semua node
+public class Fitur_rekomendasibelajar {
+    public static void jalankan(CourseGraph graph) {
+        System.out.println("\n=== REKOMENDASI URUTAN BELAJAR (TOPOLOGICAL SORT) ===");
         int[] inDegree = new int[graph.size];
+        
+        // Hitung in-degree (jumlah prasyarat) untuk tiap mata kuliah
         for (int i = 0; i < graph.size; i++) {
             AdjNode curr = graph.courses[i].adjList;
             while (curr != null) {
@@ -17,51 +15,26 @@ public class Fitur_RekomendasiBelajar {
             }
         }
 
-        // Queue manual pakai array (konsisten dengan CourseGraph — tanpa java.util)
-        int[] queue = new int[graph.size];
-        int front = 0, rear = 0;
-
+        Queue<Integer> queue = new LinkedList<>();
+        // Masukkan semua MK yang tidak punya prasyarat (in-degree 0) ke queue
         for (int i = 0; i < graph.size; i++) {
-            if (inDegree[i] == 0) queue[rear++] = i;
+            if (inDegree[i] == 0) queue.add(i);
         }
 
         int urutan = 1;
-        int totalDiproses = 0;
+        while (!queue.isEmpty()) {
+            int u = queue.poll();
+            System.out.println(urutan++ + ". [" + graph.courses[u].kode + "] " + graph.courses[u].nama);
 
-        System.out.printf("  %-4s | %-12s | %-42s | %-10s | Smt%n",
-            "No", "Kode MK", "Nama Mata Kuliah", "Level");
-        System.out.println("  -----|--------------|------------------------------------------|------------|----");
-
-        while (front < rear) {
-            int curr = queue[front++];
-            totalDiproses++;
-
-            System.out.printf("  %-4d | %-12s | %-42s | %-10s | %d%n",
-                urutan++,
-                graph.courses[curr].kode,
-                graph.courses[curr].nama,
-                graph.courses[curr].level,
-                graph.courses[curr].semester);
-
-            AdjNode adj = graph.courses[curr].adjList;
-            while (adj != null) {
-                inDegree[adj.destIndex]--;
-                if (inDegree[adj.destIndex] == 0) {
-                    queue[rear++] = adj.destIndex;
+            AdjNode curr = graph.courses[u].adjList;
+            while (curr != null) {
+                int v = curr.destIndex;
+                inDegree[v]--; // Kurangi in-degree karena prasyarat sudah "lulus"
+                if (inDegree[v] == 0) {
+                    queue.add(v);
                 }
-                adj = adj.next;
+                curr = curr.next;
             }
         }
-
-        System.out.println("──────────────────────────────────────────────────────");
-        if (totalDiproses < graph.size) {
-            System.out.println("  [!] PERINGATAN: " + (graph.size - totalDiproses) +
-                " MK tidak bisa diurutkan karena ada SIKLUS!");
-            System.out.println("      Jalankan Fitur 10 (Cycle Detection) untuk detail.");
-        } else {
-            System.out.println("  [✓] Semua " + totalDiproses + " mata kuliah berhasil diurutkan.");
-            System.out.println("  [✓] Graph bebas siklus — urutan belajar valid.");
-        }
-        System.out.println("══════════════════════════════════════════════════════\n");
     }
 }
