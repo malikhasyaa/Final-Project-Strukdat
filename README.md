@@ -49,9 +49,10 @@ Gabungan keduanya menghasilkan fitur utama bernama **Smart Path Navigator**, di 
 Final-Project-Strukdat/
 ├── src/
 │   ├── Main.java
-│   ├── CourseNode.java
-│   ├── AdjNode.java
 │   ├── TrieNode.java
+│   ├── Trie.java
+│   ├── AdjNode.java
+│   ├── CourseNode.java
 │   ├── CourseGraph.java
 │   ├── Fitur_DataLoader.java
 │   ├── Fitur_SmartPath.java
@@ -60,7 +61,7 @@ Final-Project-Strukdat/
 │   ├── Fitur_rekomendasibelajar.java
 │   ├── Fitur_CycleDetection.java
 │   ├── Fitur_IsolatedTopik.java
-│   ├── Fitur_searchtopik.java
+│   ├── Fitur_SearchTopik.java
 │   ├── Fitur_TrieTracing.java
 │   ├── Fitur_GraphTracing.java
 │   └── Fitur_EdgeCaseTracing.java
@@ -255,27 +256,58 @@ Kelas ini juga menyediakan tiga metode pembantu: `hasChild(char c)` untuk memeri
 
 ---
 
-### 2. `AdjNode.java` — Node Linked List Adjacency
-
+### 2. `Trie.java` — Kelas Utama Struktur Trie
+ 
+`Trie.java` adalah kelas utama yang digunakan oleh seluruh sistem untuk operasi pencarian. Berbeda dengan `TrieNode` yang menggunakan array 26 elemen statis, `Trie.java` mengimplementasikan Trie menggunakan struktur inner class `Node` berbasis `HashMap<Character, Node>`, sehingga lebih fleksibel dalam menangani berbagai jenis karakter termasuk spasi.
+ 
+```java
+public class Trie {
+    private static class Node {
+        Map<Character, Node> children = new HashMap<>();
+        List<Integer> indices = new ArrayList<>();
+        boolean isEnd = false;
+    }
+    private final Node root;
+}
+```
+ 
+Setiap `Node` menyimpan `List<Integer> indices` yang berisi semua indeks mata kuliah di dalam `CourseGraph.courses[]` yang namanya melewati atau berakhir di node tersebut. Pendekatan ini memungkinkan satu node merepresentasikan lebih dari satu mata kuliah jika nama mereka identik.
+ 
+**`insert(String nama, int index)`**
+ 
+Menyisipkan nama mata kuliah karakter per karakter ke dalam Trie. Untuk setiap karakter, metode `computeIfAbsent` dari `HashMap` digunakan untuk membuat node baru hanya jika belum ada, tanpa pengecekan kondisi eksplisit. Setelah semua karakter diproses, node akhir ditandai `isEnd = true` dan indeks Graph ditambahkan ke `indices`.
+ 
+**`autocomplete(String prefix)`**
+ 
+Menelusuri Trie sepanjang karakter prefix. Jika pada titik tertentu karakter tidak ditemukan di `HashMap`, metode langsung mengembalikan list kosong. Jika seluruh prefix berhasil dipetakan, metode memanggil `kumpulkan()` secara rekursif pada subtree yang ditemukan.
+ 
+**`kumpulkan(Node node, List<Integer> hasil)`**
+ 
+Fungsi DFS internal yang menelusuri seluruh subtree dari sebuah node dan mengumpulkan semua indeks yang tersimpan di node-node yang `isEnd = true`. Hasil dikembalikan sebagai `List<Integer>` ke pemanggil.
+ 
+---
+ 
+### 3. `AdjNode.java` — Node Linked List Adjacency
+ 
 `AdjNode` adalah unit pembentuk Linked List yang digunakan sebagai representasi daftar tetangga (adjacency list) pada setiap simpul Graph.
-
+ 
 ```java
 public class AdjNode {
     int destIndex;  // Indeks tujuan di dalam array courses[]
     AdjNode next;   // Pointer ke AdjNode berikutnya
 }
 ```
-
+ 
 Alih-alih menyimpan kode MK (String) secara langsung, `AdjNode` hanya menyimpan `destIndex`, yaitu posisi integer dari mata kuliah tujuan di dalam array `CourseNode[] courses` pada `CourseGraph`. Pendekatan ini lebih efisien secara memori dan komputasi karena operasi perbandingan integer jauh lebih cepat dibandingkan perbandingan String.
-
+ 
 Atribut `next` memungkinkan pembentukan Linked List berantai. Ketika sebuah mata kuliah memiliki lebih dari satu mata kuliah lanjutan, semua lanjutan tersebut tersambung dalam satu rantai Linked List yang dapat ditelusuri secara sekuensial.
-
+ 
 ---
-
-### 3. `CourseNode.java` — Simpul Utama Graph (Vertex)
-
+ 
+### 4. `CourseNode.java` — Simpul Utama Graph (Vertex)
+ 
 `CourseNode` adalah struktur data utama yang merepresentasikan satu mata kuliah sekaligus bertindak sebagai simpul (vertex) dalam Graf.
-
+ 
 ```java
 public class CourseNode {
     String kode;        // Kode unik mata kuliah
@@ -288,15 +320,15 @@ public class CourseNode {
     AdjNode adjList;    // Kepala Linked List adjacency (daftar MK lanjutan)
 }
 ```
-
+ 
 Satu `CourseNode` memuat tujuh atribut data mata kuliah sesuai ketentuan proyek (minimal 5 atribut selain ID dan nama), ditambah satu pointer `adjList` yang merupakan kepala dari Linked List adjacency milik simpul tersebut. Ketika `adjList` bernilai `null`, artinya mata kuliah ini tidak memiliki mata kuliah lanjutan yang memprasyaratkannya.
-
+ 
 ---
-
-### 4. `CourseGraph.java` — Inti Struktur Graph
-
+ 
+### 5. `CourseGraph.java` — Inti Struktur Graph
+ 
 `CourseGraph` adalah kelas inti yang mengelola seluruh operasi pada struktur Directed Graph, mulai dari penyimpanan data, penambahan simpul dan sisi, hingga operasi hapus dan tampilkan.
-
+ 
 ```java
 public class CourseGraph {
     static final int MAX = 30;
@@ -304,215 +336,205 @@ public class CourseGraph {
     int size;              // Jumlah MK yang tersimpan saat ini
 }
 ```
-
-**Operasi Utama:**
-
+ 
 **`findIndex(String kode)`**
-Mencari indeks array dari sebuah kode MK. Fungsi ini menjadi tulang punggung hampir semua operasi lain karena semua operasi Graph bekerja berdasarkan integer index, bukan String kode.
-
+Mencari indeks array dari sebuah kode MK dengan cara iterasi linear. Fungsi ini menjadi tulang punggung hampir semua operasi lain karena semua operasi Graph bekerja berdasarkan integer index, bukan String kode. Mengembalikan -1 jika tidak ditemukan.
+ 
 **`addCourse(...)`**
 Menambahkan mata kuliah baru ke dalam array `courses`. Sebelum menambahkan, fungsi ini memeriksa kapasitas array dan melakukan pengecekan duplikasi melalui `findIndex`. Jika kode sudah terdaftar, penambahan dibatalkan dan pesan kesalahan ditampilkan.
-
+ 
 **`addEdge(String dariKode, String keKode)`**
 Menambahkan sisi berarah dari satu MK ke MK lain dengan cara menyisipkan `AdjNode` baru di bagian depan Linked List adjacency milik `dariKode`. Penyisipan di depan (head insertion) dipilih karena kompleksitasnya O(1).
-
+ 
 **`removeEdge(String dariKode, String keKode)`**
-Menghapus satu sisi prasyarat dengan cara menelusuri Linked List adjacency milik `dariKode` dan memutus referensi ke `AdjNode` yang memiliki `destIndex` sesuai dengan `keKode`.
-
+Menghapus satu sisi prasyarat dengan cara menelusuri Linked List adjacency milik `dariKode` dan memutus referensi ke `AdjNode` yang memiliki `destIndex` sesuai dengan `keKode`. Menggunakan dua pointer `curr` dan `prev` untuk melakukan penghapusan linked list yang aman.
+ 
 **`removeCourse(String kode)`**
-Menghapus sebuah mata kuliah beserta seluruh relasinya secara bertahap (cascade). Prosesnya terdiri dari tiga tahap: pertama, menghapus semua sisi yang mengarah masuk ke node target dari seluruh node lain; kedua, menggeser elemen array untuk mengisi kekosongan; ketiga, memperbarui semua nilai `destIndex` pada seluruh `AdjNode` agar tetap konsisten setelah pergeseran indeks.
-
+Menghapus sebuah mata kuliah beserta seluruh relasinya secara bertahap (cascade). Prosesnya terdiri dari tiga tahap: pertama, menghapus semua sisi yang mengarah masuk ke node target dari seluruh node lain; kedua, menggeser elemen array untuk mengisi kekosongan; ketiga, memperbarui semua nilai `destIndex` pada seluruh `AdjNode` yang nilainya lebih besar dari indeks yang dihapus agar tetap konsisten setelah pergeseran.
+ 
 **`dfs(String kodeAwal)`**
-Menjalankan DFS dari sebuah simpul awal dan menelusuri semua simpul yang dapat dicapai dari simpul tersebut. Menggunakan array boolean `visited` untuk mencegah kunjungan berulang pada simpul yang sama.
-
+Menjalankan DFS maju dari sebuah simpul awal dan menelusuri semua simpul yang dapat dicapai mengikuti arah edge. Menggunakan array boolean `visited` untuk mencegah kunjungan berulang.
+ 
 **`displayGraph()`**
 Menampilkan seluruh mata kuliah beserta daftar relasi keluaran (adjacency list) dalam format teks yang mudah dibaca.
-
+ 
 ---
-
-### 5. `Fitur_DataLoader.java` — Pemuat Dataset dari CSV
-
-`Fitur_DataLoader` bertanggung jawab untuk memuat data dari dua file CSV ke dalam memori, yaitu ke dalam struktur `CourseGraph` dan `Trie` secara bersamaan.
-
+ 
+### 6. `Fitur_DataLoader.java` — Pemuat Dataset dari CSV
+ 
+`Fitur_DataLoader` bertanggung jawab untuk memuat data dari dua file CSV ke dalam memori, yaitu ke dalam struktur `CourseGraph` dan `Trie` secara bersamaan dalam satu pemanggilan fungsi.
+ 
 ```java
 public static void load(String fileNode, String fileEdge, Trie trie, CourseGraph graph)
 ```
-
-Proses pemuatan dibagi menjadi dua fase. Pada fase pertama, file `node.csv` dibaca baris per baris menggunakan `BufferedReader`. Setiap baris dipecah menggunakan delimiter koma, kemudian data dimasukkan ke `graph.addCourse()` dan nama mata kuliah (dalam huruf kecil) dimasukkan ke `trie.insert()` beserta indeksnya di Graph. Fase kedua membaca file `edge.csv` dan memanggil `graph.addEdge()` untuk setiap baris relasi yang ditemukan.
-
-Mekanisme `try-catch` pada setiap fase memastikan program tidak crash meskipun file tidak ditemukan atau terdapat kesalahan format data.
-
+ 
+Proses pemuatan dibagi menjadi dua fase. Pada fase pertama, file `node.csv` dibaca baris per baris menggunakan `BufferedReader`. Baris pertama (header kolom) dilewati dengan `br.readLine()` awal. Setiap baris berikutnya dipecah dengan delimiter koma, kemudian data dimasukkan ke `graph.addCourse()`. Setelah itu, indeks simpul yang baru saja ditambahkan diambil dengan `graph.findIndex(kode)` dan nama mata kuliah dalam huruf kecil dimasukkan ke `trie.insert()` beserta indeks tersebut, sehingga kedua struktur data selalu sinkron.
+ 
+Fase kedua membaca file `edge.csv` dengan cara yang sama dan memanggil `graph.addEdge()` untuk setiap baris relasi. Blok `try-catch` pada setiap fase memastikan program tidak crash meskipun file tidak ditemukan atau terdapat kesalahan format data, dengan mencetak pesan kesalahan yang informatif.
+ 
 ---
-
-### 6. `Main.java` — Titik Masuk Program dan Menu Utama
-
+ 
+### 7. `Main.java` — Titik Masuk Program dan Menu Utama
+ 
 `Main.java` adalah titik masuk program yang mengorkestrasi seluruh komponen sistem melalui antarmuka menu berbasis teks (CLI).
-
-Pada saat inisialisasi, program membuat satu instance `CourseGraph` dan satu instance `Trie`, kemudian memanggil `Fitur_DataLoader.load()` untuk memuat dataset dari file CSV ke kedua struktur data tersebut secara bersamaan.
-
-Program kemudian masuk ke dalam loop utama yang menampilkan 12 opsi menu:
-
-| Menu | Fungsi |
-|------|--------|
-| 1 | Insert data (MK baru atau relasi baru) |
-| 2 | Search MK berdasarkan prefix (Smart Path Navigator) |
-| 3 | Update / Delete data |
-| 4 | Tampilkan semua MK dan relasi Graph |
-| 5 | DFS — Traversal rantai prasyarat |
-| 8 | Tampilkan prasyarat sebuah topik |
-| 9 | Tracing proses Trie step-by-step |
-| 10 | Deteksi siklus prasyarat |
-| 11 | Tracing proses Graph step-by-step |
-| 12 | Tracing Edge Case Graph |
-| 0 | Keluar |
-
-Pemilihan menu menggunakan `switch-case` dan setiap kasus mendelegasikan eksekusi ke kelas fitur yang bersangkutan.
-
+ 
+Pada saat inisialisasi, program membuat satu instance `CourseGraph` dan satu instance `Trie`, kemudian memanggil `Fitur_DataLoader.load()` untuk memuat dataset dari file CSV ke kedua struktur data tersebut secara bersamaan. Input yang tidak valid (bukan angka) ditangkap oleh blok `try-catch NumberFormatException` sehingga program tidak berhenti mendadak.
+ 
+Program masuk ke dalam loop utama yang menampilkan 11 opsi menu:
+ 
+| Menu | Fungsi | Kelas yang Dipanggil |
+|------|--------|----------------------|
+| 1 | Insert data (MK baru atau relasi baru) | `graph.insertMenu(sc)` |
+| 2 | Search MK berdasarkan prefix (Smart Path Navigator) | `Fitur_SmartPath.jalankan(...)` |
+| 3 | Update / Delete data | `graph.deleteMenu(sc)` |
+| 4 | Tampilkan semua MK dan relasi Graph | `graph.displayGraph()` |
+| 5 | DFS — Traversal rantai prasyarat mundur | `Fitur_DFSPrasyarat.cetak(...)` |
+| 6 | Topological Sort — Rekomendasi urutan belajar | `Fitur_rekomendasibelajar.jalankan(graph)` |
+| 7 | Cycle Detection — Deteksi siklus prasyarat | `Fitur_CycleDetection.jalankan(graph)` |
+| 8 | Topik Terisolasi — Mata kuliah bebas prasyarat | `Fitur_IsolatedTopik.jalankan(graph)` |
+| 9 | Tracing proses Trie (Simulasi Autocomplete) | `Fitur_TrieTracing.cetak()` |
+| 10 | Tracing proses Graph (Simulasi DFS Mundur) | `Fitur_GraphTracing.cetak()` |
+| 11 | Tracing Edge Case (Kondisi Ekstrem) | `Fitur_EdgeCaseTracing.cetak()` |
+| 0 | Keluar | — |
+ 
 ---
-
-### 7. `Fitur_SmartPath.java` — Smart Path Navigator (Gabungan Trie + Graph)
-
+ 
+### 8. `Fitur_SmartPath.java` — Smart Path Navigator (Gabungan Trie + Graph)
+ 
 `Fitur_SmartPath` adalah fitur andalan yang memadukan kedua struktur data secara sinergis dalam satu alur eksekusi yang terintegrasi.
-
+ 
 ```java
 public static void jalankan(String keyword, Trie trie, CourseGraph graph)
 ```
-
-Alur eksekusi fitur ini terdiri dari tiga langkah utama. Pertama, keyword yang dimasukkan pengguna dikonversi ke huruf kecil dan diumpankan ke metode `trie.autocomplete()`. Trie kemudian menelusuri node-node prefix dan mengumpulkan semua `destIndex` dari mata kuliah yang cocok. Kedua, daftar mata kuliah yang ditemukan ditampilkan kepada pengguna. Ketiga, indeks dari hasil teratas secara otomatis diambil dan kodenya digunakan untuk memanggil `Fitur_DFSPrasyarat.cetak()`, sehingga rantai prasyarat mata kuliah tersebut langsung ditampilkan tanpa input tambahan dari pengguna.
-
+ 
+Alur eksekusi fitur ini terdiri dari tiga langkah utama. Pertama, sistem memvalidasi bahwa instance `Trie` tidak null sebelum melanjutkan. Jika valid, keyword yang dimasukkan pengguna dikonversi ke huruf kecil dan diumpankan ke `trie.autocomplete()`, yang mengembalikan `List<Integer>` berisi indeks semua mata kuliah yang cocok. Kedua, jika list kosong, sistem menampilkan pesan "Topik tidak ditemukan di database" dan berhenti. Jika ada hasil, semua mata kuliah yang cocok ditampilkan beserta kode dan namanya. Ketiga, indeks dari hasil teratas (index ke-0 pada list) secara otomatis diambil dan kodenya digunakan untuk memanggil `Fitur_DFSPrasyarat.cetak()`, sehingga rantai prasyarat mata kuliah tersebut langsung ditampilkan tanpa input tambahan dari pengguna.
+ 
 ---
-
-### 8. `Fitur_DFSPrasyarat.java` — Penelusuran Rantai Prasyarat Mundur
-
+ 
+### 9. `Fitur_DFSPrasyarat.java` — Penelusuran Rantai Prasyarat Mundur
+ 
 `Fitur_DFSPrasyarat` mengimplementasikan DFS yang berjalan **mundur** (backward traversal) dari sebuah mata kuliah target untuk menemukan semua mata kuliah yang harus diselesaikan terlebih dahulu.
-
+ 
 ```java
 public static void cetak(String kodeTarget, CourseGraph graph)
 private static void dfsMundur(int currentIdx, CourseGraph graph, boolean[] visited, int kedalaman)
 ```
-
-Berbeda dengan DFS konvensional yang mengikuti arah edge, DFS mundur bekerja dengan cara memindai seluruh `adjList` milik setiap node untuk mencari node mana saja yang memiliki edge yang mengarah ke `currentIdx`. Setiap node yang ditemukan ditampilkan dengan indentasi sesuai kedalamannya dan kemudian ditelusuri lebih lanjut secara rekursif. Array boolean `visited` digunakan untuk mencegah loop tak terbatas pada graf yang kompleks.
-
+ 
+Berbeda dengan DFS konvensional yang mengikuti arah edge keluar, DFS mundur bekerja dengan cara memindai seluruh `adjList` milik setiap node untuk mencari node mana saja yang memiliki edge yang mengarah ke `currentIdx`. Setiap node yang ditemukan ditampilkan dengan indentasi (`"   ".repeat(kedalaman)`) untuk merepresentasikan kedalaman prasyarat, kemudian ditelusuri lebih lanjut secara rekursif. Array boolean `visited` digunakan untuk mencegah loop tak terbatas pada graf yang kompleks.
+ 
 ---
-
-### 9. `Fitur_Prerequisites.java` — Tampilan Prasyarat Terstruktur
-
-`Fitur_Prerequisites` menyediakan dua mode tampilan prasyarat yang lebih terstruktur dan informatif.
-
+ 
+### 10. `Fitur_Prerequisites.java` — Tampilan Prasyarat Terstruktur
+ 
+`Fitur_Prerequisites` menyediakan dua mode tampilan prasyarat yang lebih terstruktur dan informatif dengan format visual menggunakan karakter box-drawing.
+ 
 **Mode 1: Prasyarat Langsung (1 Level)**
-
-Fungsi `tampilkanPrasyarat()` menampilkan hanya mata kuliah yang secara langsung menjadi prasyarat dari target, beserta atribut lengkapnya (kode, nama, semester, level, SKS) dalam format tabel yang rapi.
-
+ 
+Fungsi `tampilkanPrasyarat()` menampilkan hanya mata kuliah yang secara langsung menjadi prasyarat dari target. Setiap prasyarat ditampilkan dalam satu baris terformat menggunakan `System.out.printf` dengan kolom kode, nama, semester, level, dan SKS. Di bagian akhir, sistem mencetak total jumlah prasyarat yang ditemukan, atau pesan khusus jika mata kuliah tersebut tidak memiliki prasyarat.
+ 
 **Mode 2: Rantai Prasyarat Lengkap (Semua Level)**
-
-Fungsi `tampilkanRantaiPrasyarat()` menggunakan pendekatan rekursif `rantaiRekursif()` untuk menelusuri seluruh rantai prasyarat hingga ke akar (mata kuliah semester pertama yang tidak memiliki prasyarat lagi). Hasilnya ditampilkan dalam format pohon hierarkis dengan indentasi yang merepresentasikan kedalaman prasyarat.
-
+ 
+Fungsi `tampilkanRantaiPrasyarat()` memanggil `rantaiRekursif()` secara rekursif untuk menelusuri seluruh rantai prasyarat hingga ke akar (mata kuliah yang tidak memiliki prasyarat lagi). Hasilnya ditampilkan dalam format pohon hierarkis dengan karakter `└─` dan indentasi bertingkat yang merepresentasikan kedalaman prasyarat.
+ 
+Akses ke fitur ini tersedia melalui fungsi `menu()` yang menerima input pemilihan mode dari pengguna, kemudian memanggil fungsi yang sesuai.
+ 
 ---
-
-### 10. `Fitur_rekomendasibelajar.java` — Urutan Belajar via Topological Sort
-
-`Fitur_RekomendasiBelajar` mengimplementasikan Kahn's Algorithm untuk menghasilkan urutan belajar mata kuliah yang valid dari awal hingga akhir.
-
+ 
+### 11. `Fitur_rekomendasibelajar.java` — Urutan Belajar via Topological Sort
+ 
+`Fitur_rekomendasibelajar` mengimplementasikan Kahn's Algorithm untuk menghasilkan urutan belajar mata kuliah yang valid dari awal hingga akhir.
+ 
 ```java
-public static void menu(CourseGraph graph, java.util.Scanner sc)
+public static void jalankan(CourseGraph graph)
 ```
-
-Eksekusi dimulai dengan menghitung `in-degree` (jumlah prasyarat masuk) dari setiap node melalui iterasi seluruh adjacency list. Selanjutnya, semua node dengan in-degree nol dimasukkan ke dalam antrian awal menggunakan array integer manual (bukan `java.util.Queue`) untuk menjaga konsistensi dengan arsitektur sistem yang menghindari penggunaan library berlebihan. Setiap node yang keluar dari antrian ditampilkan sebagai satu langkah urutan belajar, dan in-degree semua tetangganya dikurangi satu. Jika in-degree sebuah tetangga mencapai nol, tetangga tersebut masuk ke antrian. Jika pada akhir eksekusi jumlah node yang terproses kurang dari total node, sistem memberikan peringatan bahwa ada siklus yang mencegah beberapa mata kuliah untuk bisa diurutkan.
-
+ 
+Eksekusi dimulai dengan menghitung array `inDegree[]` melalui iterasi seluruh adjacency list setiap node. Selanjutnya, semua node dengan in-degree nol dimasukkan ke dalam antrian menggunakan `java.util.LinkedList` yang diinstansiasi sebagai `Queue<Integer>`, memastikan proses enqueue dan dequeue berjalan secara efisien. Setiap node yang dikeluarkan dari antrian (`queue.poll()`) ditampilkan sebagai satu langkah urutan belajar bernomor, dan in-degree semua tetangganya dikurangi satu melalui iterasi adjacency list node tersebut. Jika in-degree sebuah tetangga mencapai nol, tetangga tersebut langsung dimasukkan ke antrian untuk diproses berikutnya.
+ 
 ---
-
-### 11. `Fitur_CycleDetection.java` — Deteksi Siklus Prasyarat
-
+ 
+### 12. `Fitur_CycleDetection.java` — Deteksi Siklus Prasyarat
+ 
 `Fitur_CycleDetection` mengimplementasikan Cycle Detection berbasis DFS dengan tiga state node untuk mendeteksi relasi prasyarat yang mustahil secara logika (melingkar).
-
+ 
 ```java
-static final int UNVISITED = 0;
-static final int VISITING  = 1;
-static final int VISITED   = 2;
+public static void jalankan(CourseGraph graph)
+private static boolean dfsMaju(int u, CourseGraph graph, int[] state)
 ```
-
-Setiap node memiliki salah satu dari tiga state. `UNVISITED` berarti node belum diproses sama sekali. `VISITING` berarti node sedang dalam proses penelusuran (berada di call stack rekursi saat ini). `VISITED` berarti node telah selesai diproses sepenuhnya.
-
-Siklus terdeteksi ketika DFS menemukan sebuah edge yang mengarah ke node berstatus `VISITING`, yang disebut **back-edge**. Ini berarti ada jalur dari node tersebut kembali ke dirinya sendiri, membentuk sebuah siklus.
-
-Fitur ini memiliki dua modus operasi. Modus pertama menjalankan deteksi pada seluruh graph dengan menampilkan log transisi state setiap node secara rinci (step-by-step). Modus kedua memungkinkan pengguna menambahkan sebuah edge sementara dan langsung memeriksa apakah edge tersebut menimbulkan siklus. Jika iya, edge tersebut otomatis dibatalkan dan dihapus.
-
+ 
+Array `state[]` integer digunakan sebagai penanda kondisi setiap node: nilai `0` untuk `UNVISITED`, nilai `1` untuk `VISITING`, dan nilai `2` untuk `VISITED`. Fungsi `jalankan()` mengiterasi semua node dan memanggil `dfsMaju()` untuk setiap node yang masih `UNVISITED`, memastikan seluruh komponen graph yang mungkin tidak terhubung tetap diperiksa.
+ 
+Di dalam `dfsMaju()`, sebelum menelusuri tetangga, state node diubah ke `VISITING`. Jika saat menelusuri ditemukan tetangga yang juga berstatus `VISITING`, artinya ada jalur yang kembali ke node yang sedang ditelusuri sehingga siklus langsung terdeteksi dan fungsi mengembalikan `true`. Setelah semua tetangga selesai diproses, state node diubah ke `VISITED` (nilai 2). Hasil akhir ditampilkan sebagai `[AMAN] Tidak ditemukan siklus` atau `[WARNING] Ditemukan siklus prasyarat`.
+ 
 ---
-
-### 12. `Fitur_IsolatedTopik.java` — Deteksi Topik Terisolasi
-
+ 
+### 13. `Fitur_IsolatedTopik.java` — Deteksi Topik Terisolasi
+ 
 `Fitur_IsolatedTopik` mengidentifikasi mata kuliah yang berdiri sendiri, yaitu mata kuliah yang tidak memiliki prasyarat (in-degree nol) sekaligus tidak memprasyaratkan mata kuliah lain (out-degree nol).
-
-Prosesnya dimulai dengan menghitung in-degree semua node melalui iterasi adjacency list. Kemudian, untuk setiap node, out-degree dihitung dengan menghitung panjang linked list adjacency-nya. Node yang memiliki keduanya bernilai nol dikategorikan sebagai terisolasi dan ditampilkan dalam format tabel. Fitur ini penting untuk mendeteksi mata kuliah yang salah dikonfigurasi atau memang berdiri sendiri seperti mata kuliah pilihan bebas.
-
+ 
+```java
+public static void jalankan(CourseGraph graph)
+```
+ 
+Prosesnya dilakukan dalam satu iterasi tunggal yang menghitung in-degree dan out-degree secara bersamaan. Untuk setiap node `i`, sistem menelusuri `adjList`-nya: setiap `AdjNode` yang ditemukan menambah `outDegree[i]` sekaligus menambah `inDegree[destIndex]`. Setelah iterasi selesai, sistem memeriksa setiap node dan menampilkan yang memiliki kedua nilai sama dengan nol. Jika tidak ada node terisolasi yang ditemukan, sistem mencetak pesan konfirmasi. Fitur ini berguna untuk mendeteksi mata kuliah yang salah dikonfigurasi atau memang berdiri sendiri.
+ 
 ---
-
-### 13. `Fitur_searchtopik.java` — Pencarian Topik via Trie
-
-`Fitur_SearchTopik` menyediakan antarmuka pencarian berbasis prefix menggunakan Trie dan menampilkan hasilnya dalam format tabel yang informatif.
-
+ 
+### 14. `Fitur_SearchTopik.java` — Pencarian Topik via Trie
+ 
+`Fitur_SearchTopik` menyediakan antarmuka pencarian mandiri berbasis prefix menggunakan Trie dengan tampilan hasil dalam format tabel berstruktur.
+ 
 ```java
 public static void menu(Trie trie, CourseGraph graph, java.util.Scanner sc)
 ```
-
-Setelah pengguna memasukkan keyword, fungsi `trie.autocomplete()` dipanggil dengan keyword dalam huruf kecil. Hasilnya berupa daftar indeks integer yang kemudian digunakan untuk mengambil data lengkap dari `graph.courses[]` dan menampilkannya dalam tabel berkolom kode MK, nama, level, dan semester. Jika tidak ada hasil yang ditemukan, sistem menampilkan pesan informatif tanpa menyebabkan program berhenti.
-
+ 
+Tampilan menggunakan karakter box-drawing (`╔`, `║`, `╚`) untuk membingkai output secara visual. Setelah pengguna memasukkan keyword, sistem memvalidasi bahwa instance `Trie` tidak null, kemudian memanggil `trie.autocomplete()` dengan keyword dalam huruf kecil. Jika hasil kosong, pesan "Data/Topik tidak ditemukan" ditampilkan. Jika ada hasil, sistem mencetak tabel berformat kolom No, Kode MK, Nama Mata Kuliah, Level, dan Semester menggunakan `System.out.printf`. Di akhir, jumlah total mata kuliah yang ditemukan ditampilkan sebagai ringkasan.
+ 
 ---
-
-### 14. `Fitur_TrieTracing.java` — Tracing Proses Trie Step-by-Step
-
-`Fitur_TrieTracing` adalah fitur edukasi yang menampilkan proses internal operasi Trie secara visual dan bertahap, memudahkan pemahaman cara kerja struktur data ini.
-
-Kelas ini memiliki implementasi Trie mandiri dengan `TrieNode` sebagai akar dan mendukung dua sub-fitur utama.
-
-**Sub-Fitur Tracing Insert:**
-
-Fungsi `insert(String namaMK, String kodeMK, boolean withTrace)` dengan parameter `withTrace = true` akan menampilkan setiap langkah proses insert secara terperinci. Untuk setiap karakter dalam nama mata kuliah, sistem menampilkan nomor step, karakter yang diproses, status node (BUAT NODE BARU atau NODE SUDAH ADA), dan jalur penelusuran dari root hingga posisi saat ini. Di akhir proses, sistem mengonfirmasi penandaan `isEnd = true` dan penyimpanan kode MK.
-
-**Sub-Fitur Tracing Search Prefix:**
-
-Fungsi `searchPrefix(String prefix)` membagi proses pencarian menjadi dua fase yang ditampilkan secara eksplisit. Fase pertama menampilkan penelusuran karakter prefix satu per satu, dengan status apakah node untuk karakter tersebut ditemukan atau tidak. Jika pada titik tertentu node tidak ditemukan, pencarian berhenti dan pesan "tidak ditemukan" ditampilkan. Fase kedua, jika prefix berhasil ditemukan, menampilkan proses DFS pada subtree Trie untuk mengumpulkan semua nama mata kuliah lengkap yang berawalan prefix tersebut.
-
+ 
+### 15. `Fitur_TrieTracing.java` — Tracing Simulasi Proses Trie
+ 
+`Fitur_TrieTracing` adalah fitur demonstrasi yang menampilkan log simulasi step-by-step dari proses autocomplete Trie untuk keyword `"sis"` secara hardcoded dan terstruktur.
+ 
+```java
+public static void cetak()
+```
+ 
+Simulasi dibagi menjadi tiga fase yang ditampilkan secara berurutan. **Fase 1** menampilkan proses penelusuran prefix karakter per karakter: sistem menunjukkan bahwa pointer berhasil turun dari ROOT ke Node('s'), lalu ke Node('i'), lalu ke Node('s'), dengan konfirmasi bahwa setiap node ditemukan di `children` node sebelumnya.
+ 
+**Fase 2** menampilkan proses Pre-Order Traversal pada subtree setelah prefix ditemukan: sistem menunjukkan bahwa node 's' terakhir bukan `isEndOfWord`, kemudian menemukan cabang lanjutan `'t' -> 'e' -> 'm'` yang mencapai node akhir dengan `isEndOfWord = true`, lalu mengumpulkan CourseID (Index 3 dan Index 8) ke dalam Result List.
+ 
+**Fase 3** menampilkan proses backtracking: sistem mengonfirmasi bahwa tidak ada cabang lain yang aktif dan traversal selesai, kemudian Result List dikembalikan ke Smart Path Navigator.
+ 
 ---
-
-### 15. `Fitur_GraphTracing.java` — Tracing Proses Graph Step-by-Step
-
-`Fitur_GraphTracing` menampilkan proses eksekusi dua algoritma graph utama secara visual dan bertahap, berguna untuk keperluan demonstrasi dan pemahaman algoritma.
-
-**Sub-Fitur 13A: Tracing DFS**
-
-Fungsi `tracingDFS(CourseGraph g, String startKode)` menampilkan setiap langkah DFS dari sebuah simpul awal. Untuk setiap tindakan yang terjadi (VISIT, PUSH/EXPLORE, SUDAH VISIT, BACKTRACK), sistem mencetak nomor step, tindakan, kode MK, dan nama MK dengan indentasi yang merepresentasikan kedalaman rekursi. Di akhir, urutan kunjungan ditampilkan secara lengkap.
-
-**Sub-Fitur 13B: Tracing Topological Sort (Kahn's Algorithm)**
-
-Fungsi `tracingTopologicalSort(CourseGraph g)` membagi proses Kahn's Algorithm menjadi dua fase yang ditampilkan secara terperinci. Fase pertama menampilkan in-degree awal setiap node beserta keterangannya (masuk antrian awal atau menunggu sejumlah prasyarat). Fase kedua menampilkan setiap langkah proses BFS: node mana yang di-dequeue, tetangga mana saja yang in-degree-nya berkurang, dan node mana yang baru masuk ke antrian. Hasil akhir berupa urutan belajar yang valid ditampilkan dalam format tabel.
-
+ 
+### 16. `Fitur_GraphTracing.java` — Tracing Simulasi Proses DFS Mundur
+ 
+`Fitur_GraphTracing` menampilkan log simulasi step-by-step dari proses DFS Mundur (backward traversal) untuk mencari prasyarat mata kuliah "Struktur Data (Index 5)" secara hardcoded.
+ 
+```java
+public static void cetak()
+```
+ 
+Simulasi dibagi menjadi tiga fase. **Fase 1** menampilkan pemanggilan awal `dfsMundur(Index 5)`: sistem mengonfirmasi bahwa `visited[5]` disetel ke `true` dan pemindaian seluruh node dimulai untuk mencari incoming edge yang menuju Index 5.
+ 
+**Fase 2** menampilkan proses rekursi dan penelusuran adjacency list: sistem menemukan bahwa Node(Index 1) memiliki edge yang mengarah ke Node(Index 5), memeriksa `visited[1]` yang bernilai `false`, mencetak hasil "Wajib Lulus: Algoritma Pemrograman", kemudian memanggil `dfsMundur(Index 1)` secara rekursif. Rekursi kedua menetapkan `visited[1] = true` dan menemukan bahwa tidak ada incoming edge ke Index 1.
+ 
+**Fase 3** menampilkan proses backtracking: `dfsMundur(Index 1)` selesai dan dikembalikan ke `dfsMundur(Index 5)`, yang kemudian melanjutkan pemindaian dan mengonfirmasi tidak ada edge lain yang menuju Index 5, sehingga call stack kosong dan algoritma selesai.
+ 
 ---
-
-### 16. `Fitur_EdgeCaseTracing.java` — Tracing Lima Kondisi Ekstrem Graph
-
-`Fitur_EdgeCaseTracing` adalah fitur pengujian komprehensif yang mensimulasikan lima kondisi ekstrem pada graph secara live untuk membuktikan ketahanan sistem (fault tolerance).
-
-**Edge Case 1: Node Terisolasi**
-
-Membuat graph mini dengan satu node terisolasi (tanpa edge) dan dua node normal yang saling terhubung. Sistem menampilkan in-degree dan out-degree setiap node, lalu menjalankan DFS dari node terisolasi untuk membuktikan bahwa DFS hanya mengunjungi satu node tanpa error.
-
-**Edge Case 2: Siklus (Cycle Detection)**
-
-Membuat graph dengan siklus A → B → C → A. Sistem menampilkan bahwa semua node memiliki in-degree lebih dari nol, sehingga antrian awal Kahn's Algorithm kosong. Hasilnya, tidak ada satupun node yang dapat diproses, dan sistem mengonfirmasi bahwa jumlah node terproses (0) lebih sedikit dari total node (3), menandakan keberadaan siklus.
-
-**Edge Case 3: Kode MK Tidak Valid**
-
-Mensimulasikan input kode MK fiktif "ET999999" ke dalam `findIndex()`. Sistem menampilkan hasil pencarian yang bernilai -1 dan mengonfirmasi bahwa DFS dibatalkan dengan aman tanpa memunculkan `NullPointerException`.
-
-**Edge Case 4: Graph Kosong**
-
-Menjalankan Topological Sort pada sebuah instance `CourseGraph` yang baru dibuat tanpa node apapun. Sistem membuktikan bahwa operasi berjalan selesai tanpa error, dengan hasil berupa list kosong, dan tidak ada `ArrayIndexOutOfBoundsException` yang terjadi.
-
-**Edge Case 5: Self-Loop**
-
-Membuat node yang memiliki edge ke dirinya sendiri (self-loop). Sistem menampilkan bahwa in-degree node tersebut tidak akan pernah bisa mencapai nol, sehingga node tersebut tidak akan pernah masuk ke antrian Kahn's Algorithm dan tidak akan pernah terproses, yang merupakan perilaku yang benar dan diharapkan.
-
+ 
+### 17. `Fitur_EdgeCaseTracing.java` — Tracing Simulasi Kondisi Input Tidak Valid
+ 
+`Fitur_EdgeCaseTracing` menampilkan log simulasi step-by-step dari penanganan kondisi ekstrem berupa pencarian keyword yang tidak ada dalam database, menggunakan input `"zzz"` sebagai contoh kasus.
+ 
+```java
+public static void cetak()
+```
+ 
+Simulasi dibagi menjadi dua fase. **Fase 1** menampilkan eksekusi `Trie.autocomplete("zzz")`: sistem menunjukkan bahwa pointer dimulai di ROOT, kemudian saat membaca karakter pertama 'z', pengecekan `root.children['z']` mengembalikan NULL karena cabang tersebut tidak pernah dibuat selama proses insert dataset. Iterasi langsung dihentikan dan fungsi Trie mengembalikan `List<Integer>` yang kosong.
+ 
+**Fase 2** menampilkan penanganan oleh Smart Path Navigator: sistem menunjukkan bahwa list kosong diterima dan kondisi `if (hasilPencarian.isEmpty())` terpenuhi, sehingga pemanggilan ke Graph dan DFS dibatalkan sepenuhnya. Pesan "Topik tidak ditemukan di database" dicetak ke terminal. Simulasi dikonfirmasi berhasil menghindari `NullPointerException` dan sistem tetap dalam kondisi aman.
+ 
 ---
 
 ## Cara Menjalankan Program
@@ -546,28 +568,36 @@ java -cp out Main
 Pastikan direktori `data/` yang berisi `node.csv` dan `edge.csv` berada di direktori kerja yang sama saat program dijalankan.
 
 ### Contoh Alur Penggunaan
-
+ 
 ```
 ========================================
    LIBRARY KNOWLEDGE NAVIGATOR
 ========================================
 1.  Insert data (MK baru / relasi baru)
 2.  Search MK berdasarkan prefix
-...
+3.  Update / Delete data
+4.  Tampilkan semua MK & Graph
+5.  DFS - Traversal rantai prasyarat
+6.  Topological Sort - Urutan belajar
+7.  Cycle Detection (Deteksi Siklus)
+8.  Topik Terisolasi (Bebas Prasyarat)
+9.  Tracing Proses Trie (Simulasi Autocomplete)
+10. Tracing Proses Graph (Simulasi DFS)
+11. Tracing Edge Case (Kondisi Ekstrem)
+0.  Keluar
 Pilih menu: 2
 Masukkan awalan topik (contoh: 'Sistem'): Sistem
-
+ 
 === SMART PATH NAVIGATOR ===
 Ditemukan 3 kecocokan mata kuliah:
 - [ET234201] Sistem Operasi
 - [ET234204] Sistem Basis Data
 - [ET234406] Integrasi Sistem
-
+ 
 Menampilkan pohon prasyarat untuk hasil teratas:
 Menelusuri rantai prasyarat mundur untuk: Sistem Operasi
    -> Wajib Lulus: [ET234102] Arsitektur dan Organisasi Komputer
 ```
-
 ---
 
 ## Catatan 
