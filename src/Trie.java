@@ -48,6 +48,8 @@ public class Trie {
         return hasil;
     }
 
+    
+
     // DFS mengumpulkan semua index pada subtree node tertentu
     private void kumpulkan(Node node, List<Integer> hasil) {
         if (node.isEnd) {
@@ -56,5 +58,12 @@ public class Trie {
         for (Node child : node.children.values()) {
             kumpulkan(child, hasil);
         }
+    }
+
+    // Method untuk mengosongkan isi Trie
+    public void clear() {
+        this.root.children.clear();
+        this.root.indices.clear();
+        this.root.isEnd = false;
     }
 }

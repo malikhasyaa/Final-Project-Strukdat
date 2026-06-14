@@ -1,3 +1,6 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Scanner;
 
 public class CourseGraph {
@@ -46,7 +49,7 @@ public class CourseGraph {
         courses[dari].adjList = baru;
     }
 
-    // Load seluruh dataset 25 MK + 41 edge
+    // Load dataset hardcoded (opsional jika sudah pakai Fitur_DataLoader)
     public void loadData() {
         // === NODE ===
         addCourse("ET234101","Statistika dan Probabilitas","Matematika","Mudah",3,60,1);
@@ -212,8 +215,18 @@ public class CourseGraph {
         System.out.println("Berhasil: MK '" + nama + "' dan semua relasinya dihapus.");
     }
 
+    // Helper untuk Rebuild / Sinkronisasi Trie
+    public void rebuildTrie(Trie myTrie) {
+        if (myTrie != null) {
+            myTrie.clear(); 
+            for (int i = 0; i < size; i++) {
+                myTrie.insert(courses[i].nama.toLowerCase(), i);
+            }
+        }
+    }
+
     // Menu Insert (Fitur 1)
-    public void insertMenu(Scanner sc) {
+    public void insertMenu(Scanner sc, Trie myTrie) {
         System.out.println("\n=== INSERT DATA ===");
         System.out.println("1. Tambah Mata Kuliah baru");
         System.out.println("2. Tambah Relasi Prasyarat baru");
@@ -228,7 +241,13 @@ public class CourseGraph {
             System.out.print("SKS         : "); int sks         = Integer.parseInt(sc.nextLine().trim());
             System.out.print("Est. Jam    : "); int jam         = Integer.parseInt(sc.nextLine().trim());
             System.out.print("Semester    : "); int smt         = Integer.parseInt(sc.nextLine().trim());
+            
             addCourse(kode, nama, kategori, level, sks, jam, smt);
+            
+            if (myTrie != null) {
+                int indexBaru = findIndex(kode); 
+                myTrie.insert(nama.toLowerCase(), indexBaru);
+            }
             System.out.println("Berhasil: MK '" + nama + "' ditambahkan.");
 
         } else if (pilih == 2) {
@@ -249,20 +268,60 @@ public class CourseGraph {
         }
     }
 
-    // Menu Delete (Fitur 3)
-    public void deleteMenu(Scanner sc) {
-        System.out.println("\n=== DELETE DATA ===");
-        System.out.println("1. Hapus Relasi Prasyarat (removeEdge)");
-        System.out.println("2. Hapus Mata Kuliah beserta semua relasinya (removeCourse)");
+    // Menu Update dan Delete digabung (Fitur 3)
+    public void updateDeleteMenu(Scanner sc, Trie myTrie) {
+        System.out.println("\n=== UPDATE / DELETE DATA ===");
+        System.out.println("1. Update Data Mata Kuliah");
+        System.out.println("2. Hapus Relasi Prasyarat (removeEdge)");
+        System.out.println("3. Hapus Mata Kuliah beserta semua relasinya (removeCourse)");
         System.out.print("Pilih: ");
         int pilih = Integer.parseInt(sc.nextLine().trim());
 
-        if (pilih == 1) {
+        if (pilih == 1) { 
+            System.out.print("Masukkan Kode MK yang ingin di-update: "); 
+            String kode = sc.nextLine();
+            int idx = findIndex(kode);
+            
+            if (idx == -1) {
+                System.out.println("Gagal: Kode MK tidak ditemukan.");
+                return;
+            }
+
+            System.out.println("\nMasukkan data baru (Tekan ENTER jika tidak ingin mengubah data):");
+            
+            System.out.print("Nama MK [" + courses[idx].nama + "]: ");
+            String newNama = sc.nextLine();
+            if (!newNama.trim().isEmpty()) courses[idx].nama = newNama;
+
+            System.out.print("Kategori [" + courses[idx].kategori + "]: ");
+            String newKat = sc.nextLine();
+            if (!newKat.trim().isEmpty()) courses[idx].kategori = newKat;
+
+            System.out.print("Level [" + courses[idx].level + "]: ");
+            String newLevel = sc.nextLine();
+            if (!newLevel.trim().isEmpty()) courses[idx].level = newLevel;
+
+            System.out.print("SKS [" + courses[idx].sks + "]: ");
+            String newSks = sc.nextLine();
+            if (!newSks.trim().isEmpty()) courses[idx].sks = Integer.parseInt(newSks.trim());
+
+            System.out.print("Est. Jam [" + courses[idx].estimasiJam + "]: ");
+            String newJam = sc.nextLine();
+            if (!newJam.trim().isEmpty()) courses[idx].estimasiJam = Integer.parseInt(newJam.trim());
+
+            System.out.print("Semester [" + courses[idx].semester + "]: ");
+            String newSmt = sc.nextLine();
+            if (!newSmt.trim().isEmpty()) courses[idx].semester = Integer.parseInt(newSmt.trim());
+
+            rebuildTrie(myTrie);
+            System.out.println("Berhasil: Data MK '" + courses[idx].kode + "' telah diperbarui.");
+
+        } else if (pilih == 2) {
             System.out.print("Kode MK Prasyarat (dari) : "); String dari = sc.nextLine();
             System.out.print("Kode MK Tujuan    (ke)   : "); String ke   = sc.nextLine();
             removeEdge(dari, ke);
 
-        } else if (pilih == 2) {
+        } else if (pilih == 3) {
             System.out.print("Kode MK yang akan dihapus: "); String kode = sc.nextLine();
             int idx = findIndex(kode);
             if (idx == -1) {
@@ -275,6 +334,8 @@ public class CourseGraph {
             String konfirmasi = sc.nextLine();
             if (konfirmasi.equalsIgnoreCase("y")) {
                 removeCourse(kode);
+                rebuildTrie(myTrie);
+                System.out.println("Data Trie otomatis disinkronisasi ulang.");
             } else {
                 System.out.println("Dibatalkan.");
             }
@@ -296,6 +357,39 @@ public class CourseGraph {
                 curr = curr.next;
             }
             System.out.println();
+        }
+    }
+
+    // FITUR BARU: Menyimpan data array dan edge kembali ke file CSV
+    public void saveDataToFile(String fileNode, String fileEdge) {
+        // 1. Simpan (Timpa) file Node
+        try (PrintWriter pw = new PrintWriter(new FileWriter(fileNode))) {
+            // Tulis Header agar sesuai dengan pembacaan DataLoader
+            pw.println("KODE,NAMA,KATEGORI,LEVEL,SKS,EST_JAM,SEMESTER");
+            for (int i = 0; i < size; i++) {
+                CourseNode c = courses[i];
+                pw.println(c.kode + "," + c.nama + "," + c.kategori + "," + 
+                           c.level + "," + c.sks + "," + c.estimasiJam + "," + c.semester);
+            }
+            System.out.println("[OK] Data Mata Kuliah permanen disimpan ke: " + fileNode);
+        } catch (IOException e) {
+            System.out.println("[ERROR] Gagal menyimpan file node: " + e.getMessage());
+        }
+
+        // 2. Simpan (Timpa) file Edge
+        try (PrintWriter pw = new PrintWriter(new FileWriter(fileEdge))) {
+            // Tulis Header Edge
+            pw.println("KODE_PRASYARAT,KODE_LANJUTAN");
+            for (int i = 0; i < size; i++) {
+                AdjNode curr = courses[i].adjList;
+                while (curr != null) {
+                    pw.println(courses[i].kode + "," + courses[curr.destIndex].kode);
+                    curr = curr.next;
+                }
+            }
+            System.out.println("[OK] Data Relasi Prasyarat permanen disimpan ke: " + fileEdge);
+        } catch (IOException e) {
+            System.out.println("[ERROR] Gagal menyimpan file edge: " + e.getMessage());
         }
     }
 }

@@ -39,7 +39,7 @@ public class Main {
 
             switch (pilih) {
                 case 1:
-                    graph.insertMenu(sc);
+                    graph.insertMenu(sc, trie);
                     break;
                 case 2:
                     System.out.print("Masukkan awalan topik (contoh: 'Sistem'): ");
@@ -47,7 +47,7 @@ public class Main {
                     Fitur_SmartPath.jalankan(keyword, trie, graph);
                     break;
                 case 3:
-                    graph.deleteMenu(sc);
+                    graph.updateDeleteMenu(sc, trie);
                     break;
                 case 4:
                     graph.displayGraph();
@@ -76,8 +76,12 @@ public class Main {
                     Fitur_EdgeCaseTracing.cetak();
                     break;
                 case 0:
-                    System.out.println("Keluar. Sampai jumpa!");
-                    break;
+                   System.out.println("Menyimpan data sebelum keluar...");
+                // Ganti nama file CSV-nya sesuai dengan file asli milik kelompokmu!
+               graph.saveDataToFile("data/node.csv", "data/edge.csv");
+                System.out.println("Terima kasih telah menggunakan Library Knowledge Navigator.");
+                System.exit(0);
+                break;
                 default:
                     System.out.println("Pilihan tidak valid.");
             }
