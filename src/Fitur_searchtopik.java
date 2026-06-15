@@ -4,9 +4,6 @@ public class Fitur_SearchTopik {
 
 
     public static void menu(Trie trie, CourseGraph graph, java.util.Scanner sc) {
-        System.out.println("\n╔══════════════════════════════════════════════════════╗");
-        System.out.println("║     FITUR 7 — SEARCH TOPIK                          ║");
-        System.out.println("╚══════════════════════════════════════════════════════╝");
         System.out.print("  Masukkan kata kunci / prefix (contoh: 'Sistem'): ");
         String keyword = sc.nextLine().trim();
 
