@@ -581,22 +581,17 @@ Pastikan direktori `data/` yang berisi `node.csv` dan `edge.csv` berada di direk
 6.  Topological Sort - Urutan belajar
 7.  Cycle Detection (Deteksi Siklus)
 8.  Topik Terisolasi (Bebas Prasyarat)
-9.  Tracing Proses Trie (Simulasi Autocomplete)
+9.  Tampilkan Prasyarat Sebuah Topik (Langsung & Rantai)
 10. Tracing Proses Graph (Simulasi DFS)
 11. Tracing Edge Case (Kondisi Ekstrem)
+12. Tracing Proses Trie (Simulasi Autocomplete)
 0.  Keluar
-Pilih menu: 2
-Masukkan awalan topik (contoh: 'Sistem'): Sistem
- 
-=== SMART PATH NAVIGATOR ===
-Ditemukan 3 kecocokan mata kuliah:
-- [ET234201] Sistem Operasi
-- [ET234204] Sistem Basis Data
-- [ET234406] Integrasi Sistem
- 
-Menampilkan pohon prasyarat untuk hasil teratas:
-Menelusuri rantai prasyarat mundur untuk: Sistem Operasi
-   -> Wajib Lulus: [ET234102] Arsitektur dan Organisasi Komputer
+Pilih menu: 0
+
+Menyimpan data sebelum keluar...
+[OK] Data Mata Kuliah permanen disimpan ke: data/node.csv
+[OK] Data Relasi Prasyarat permanen disimpan ke: data/edge.csv
+Terima kasih telah menggunakan Library Knowledge Navigator.
 ```
 ---
 
