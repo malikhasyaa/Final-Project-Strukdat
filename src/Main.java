@@ -24,9 +24,10 @@ public class Main {
             System.out.println("6.  Topological Sort - Urutan belajar");
             System.out.println("7.  Cycle Detection (Deteksi Siklus)");
             System.out.println("8.  Topik Terisolasi (Bebas Prasyarat)");
-            System.out.println("9.  Tracing Proses Trie (Simulasi Autocomplete)");
+            System.out.println("9.  Tampilkan Prasyarat Sebuah Topik (Langsung & Rantai)");
             System.out.println("10. Tracing Proses Graph (Simulasi DFS)");
             System.out.println("11. Tracing Edge Case (Kondisi Ekstrem)");
+            System.out.println("12. Tracing Proses Trie (Simulasi Autocomplete)");
             System.out.println("0.  Keluar");
             System.out.print("Pilih menu: ");
 
@@ -67,13 +68,16 @@ public class Main {
                     Fitur_IsolatedTopik.jalankan(graph);
                     break;
                 case 9:
-                    Fitur_TrieTracing.cetak();
+                    Fitur_Prerequisites.menu(graph, sc);
                     break;
                 case 10:
                     Fitur_GraphTracing.cetak();
                     break;
                 case 11:
                     Fitur_EdgeCaseTracing.cetak();
+                    break;
+                case 12:
+                    Fitur_TrieTracing.cetak();
                     break;
                 case 0:
                    System.out.println("Menyimpan data sebelum keluar...");

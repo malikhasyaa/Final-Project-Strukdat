@@ -9,7 +9,7 @@ public class Fitur_Prerequisites {
         }
 
         System.out.println("\n╔══════════════════════════════════════════════════════╗");
-        System.out.println("║        FITUR 8 — DAFTAR PRASYARAT MATA KULIAH       ║");
+        System.out.println("║             DAFTAR PRASYARAT MATA KULIAH             ║");
         System.out.println("╚══════════════════════════════════════════════════════╝");
         System.out.println("  Target MK  : [" + graph.courses[targetIdx].kode + "] "
                            + graph.courses[targetIdx].nama);
@@ -54,7 +54,7 @@ public class Fitur_Prerequisites {
         }
 
         System.out.println("\n╔══════════════════════════════════════════════════════╗");
-        System.out.println("║       FITUR 8b — RANTAI PRASYARAT LENGKAP           ║");
+        System.out.println("║               RANTAI PRASYARAT LENGKAP               ║");
         System.out.println("╚══════════════════════════════════════════════════════╝");
         System.out.println("  Target : [" + kodeTujuan + "] " + graph.courses[targetIdx].nama);
         System.out.println("──────────────────────────────────────────────────────");
@@ -62,8 +62,6 @@ public class Fitur_Prerequisites {
 
         boolean[] visited = new boolean[graph.size];
         rantaiRekursif(graph, targetIdx, visited, 1);
-
-        System.out.println("══════════════════════════════════════════════════════\n");
     }
 
     private static void rantaiRekursif(CourseGraph graph, int targetIdx,
@@ -89,7 +87,7 @@ public class Fitur_Prerequisites {
     }
 
     public static void menu(CourseGraph graph, java.util.Scanner sc) {
-        System.out.println("\n=== FITUR 8 — TAMPILKAN PRASYARAT SEBUAH TOPIK ===");
+        System.out.println("\n=== TAMPILKAN PRASYARAT SEBUAH TOPIK ===");
         System.out.println("  1. Prasyarat langsung (1 level)");
         System.out.println("  2. Rantai prasyarat lengkap (semua level)");
         System.out.print("  Pilih mode: ");
@@ -102,6 +100,13 @@ public class Fitur_Prerequisites {
             return;
         }
 
+        // PERBAIKAN: Cek validitas mode di sini. Tolak jika bukan 1 atau 2.
+        if (mode != 1 && mode != 2) {
+            System.out.println("  [!] Pilihan tidak valid. Silakan pilih 1 atau 2.");
+            return;
+        }
+
+        // Jika mode valid (1 atau 2), baru program akan meminta Kode MK target
         System.out.print("  Masukkan Kode MK target: ");
         String kode = sc.nextLine().trim().toUpperCase();
 
@@ -109,8 +114,6 @@ public class Fitur_Prerequisites {
             tampilkanPrasyarat(graph, kode);
         } else if (mode == 2) {
             tampilkanRantaiPrasyarat(graph, kode);
-        } else {
-            System.out.println("  [!] Pilihan tidak valid.");
         }
     }
 }
